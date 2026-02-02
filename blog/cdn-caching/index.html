@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en" data-astro-cid-ouamjn2i> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="A terminal-styled developer blog"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>CDN Caching</title><link rel="stylesheet" href="/_astro/_slug_.GJexHCZG.css">
-<link rel="stylesheet" href="/_astro/_slug_.TTX37v3e.css"><script type="module">const c=document.getElementById("search-button");c?.addEventListener("click",()=>{document.dispatchEvent(new CustomEvent("toggle-search"))});const n=document.getElementById("theme-toggle"),o=window.matchMedia("(prefers-color-scheme: dark)").matches,e=localStorage.getItem("theme");(e==="dark"||!e&&o)&&document.documentElement.classList.add("dark-theme");n?.addEventListener("click",()=>{const t=document.documentElement.classList.toggle("dark-theme");localStorage.setItem("theme",t?"dark":"light")});
+<link rel="stylesheet" href="/_astro/_slug_.C9IfslTD.css"><script type="module">const c=document.getElementById("search-button");c?.addEventListener("click",()=>{document.dispatchEvent(new CustomEvent("toggle-search"))});const n=document.getElementById("theme-toggle"),o=window.matchMedia("(prefers-color-scheme: dark)").matches,e=localStorage.getItem("theme");(e==="dark"||!e&&o)&&document.documentElement.classList.add("dark-theme");n?.addEventListener("click",()=>{const t=document.documentElement.classList.toggle("dark-theme");localStorage.setItem("theme",t?"dark":"light")});
 </script>
 <script type="module" src="/_astro/page.DZtx3eTe.js"></script></head> <body data-astro-cid-ouamjn2i> <header class="header" data-astro-cid-3ef6ksr2> <div class="terminal-header" data-astro-cid-3ef6ksr2> <div class="terminal-dots" data-astro-cid-3ef6ksr2> <div class="dot red" data-astro-cid-3ef6ksr2></div> <div class="dot yellow" data-astro-cid-3ef6ksr2></div> <div class="dot green" data-astro-cid-3ef6ksr2></div> </div> <nav class="terminal-nav" data-astro-cid-3ef6ksr2> <a href="/" class="command " data-astro-cid-3ef6ksr2>cd ~</a> <a href="/blog" class="command active" data-astro-cid-3ef6ksr2>cd ~/blog</a> <a href="/random" class="command " data-astro-cid-3ef6ksr2>rand</a> <a href="/whoami" class="command " data-astro-cid-3ef6ksr2>whoami</a> <a href="/ping" class="command " data-astro-cid-3ef6ksr2>ping</a> <a href="/assets/resume/PrabhavDogra.pdf" target="_blank" rel="noopener noreferrer" class="command" data-astro-cid-3ef6ksr2>cd ~/resume</a> </nav> <span class="prompt" data-astro-cid-3ef6ksr2>$</span> <button id="search-button" class="search-button" data-astro-cid-3ef6ksr2>
 search <span class="search-term" data-astro-cid-3ef6ksr2>--query='search term'</span> </button> </div> </header>   <main class="container" data-astro-cid-ouamjn2i> <div class="content" data-astro-cid-ouamjn2i> <div class="blog-title" data-astro-cid-ouamjn2i>~/blog</div>   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous"> <div class="blog-path" data-astro-cid-4dqtj3le>~/blog/cdn-caching</div> <article class="blog-post" data-astro-cid-4dqtj3le> <h1 class="blog-post-title" data-astro-cid-4dqtj3le>CDN Caching</h1> <div class="blog-post-date" data-astro-cid-4dqtj3le>📅 August 8, 2025</div> <div class="blog-post-content markdown-content" data-astro-cid-4dqtj3le>  <h1 id="starting-from-scratch">Starting from scratch</h1>
@@ -44,7 +44,40 @@ If your computer doesn’t know the IP address:</li>
 <h1 id="cdn-caching">CDN Caching</h1>
 <h2 id="what-is-cdn-caching">What is CDN Caching?</h2>
 <h2 id="how-does-cdn-caching-work">How does CDN Caching work?</h2>
-<h2 id="how-to-implement-cdn-caching">How to implement CDN Caching?</h2>  </div> <div class="blog-post-nav" data-astro-cid-4dqtj3le> <a href="/" class="back-link" data-astro-cid-4dqtj3le>cd ..</a> </div> </article>  </div> </main> <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <div id="search-modal" x-data="{ 
+<h2 id="how-to-implement-cdn-caching">How to implement CDN Caching?</h2>  </div> <div class="blog-post-nav" data-astro-cid-4dqtj3le> <a href="/" class="back-link" data-astro-cid-4dqtj3le>cd ..</a> </div> </article> <div id="newsletter-modal" x-data="{ 
+    open: false,
+    submitted: false,
+    init() {
+      // Check if already dismissed or subscribed
+      if (localStorage.getItem('newsletter_dismissed')) {
+        return;
+      }
+
+      // Show after 3 seconds
+      setTimeout(() => {
+         this.open = true;
+      }, 3000);
+    },
+    dismiss() {
+      this.open = false;
+      localStorage.setItem('newsletter_dismissed', 'true');
+    },
+    handleLoad() {
+      // This function runs when the iframe loads (after submission)
+      if (this.submitted) {
+        // Show success message or just close
+        // For now, let's just close it after a brief delay to imply success
+        setTimeout(() => {
+           this.dismiss();
+        }, 1000);
+      }
+    },
+    submitForm() {
+      this.submitted = true;
+      // The form submission is handled by the browser target='hidden_iframe'
+      // We just set the submitted flag to handle the iframe load event
+    }
+  }" x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-90" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-90" class="newsletter-modal" style="display: none;" :style="open ? 'display: flex' : 'display: none'" data-astro-cid-rcfmcarr> <div class="newsletter-backdrop" @click="dismiss()" data-astro-cid-rcfmcarr></div> <div class="newsletter-container" data-astro-cid-rcfmcarr> <div class="terminal-header" data-astro-cid-rcfmcarr> <div class="terminal-dots" data-astro-cid-rcfmcarr> <div class="dot red" @click="dismiss()" data-astro-cid-rcfmcarr></div> <div class="dot yellow" data-astro-cid-rcfmcarr></div> <div class="dot green" data-astro-cid-rcfmcarr></div> </div> <span class="terminal-title" data-astro-cid-rcfmcarr>subscribe.sh</span> </div> <div class="newsletter-content" x-show="!submitted" data-astro-cid-rcfmcarr> <h3 data-astro-cid-rcfmcarr>Stay Updated!</h3> <p data-astro-cid-rcfmcarr>Get the latest posts delivered straight to your inbox.</p> <!-- GOOGLE FORM INTEGRATION --> <!-- Replace ACTION_URL with your Google Form action URL --> <!-- Replace ENTRY_ID with your email input name attribute --> <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" @load="handleLoad()" data-astro-cid-rcfmcarr></iframe> <form action="https://docs.google.com/forms/d/e/1FAIpQLSfZIQJga0QNT31bctskhz0S3sHPeLnTjYBUAhnufC1yEdcl-g/formResponse" method="post" target="hidden_iframe" @submit="submitForm()" class="newsletter-form" data-astro-cid-rcfmcarr> <div class="input-group" data-astro-cid-rcfmcarr> <span class="prompt" data-astro-cid-rcfmcarr>$</span> <input type="email" name="entry.1831353926" placeholder="enter your email..." required class="email-input" data-astro-cid-rcfmcarr> </div> <div class="form-actions" data-astro-cid-rcfmcarr> <button type="button" @click="dismiss()" class="btn-cancel" data-astro-cid-rcfmcarr>Cancel</button> <button type="submit" class="btn-submit" data-astro-cid-rcfmcarr>Subscribe</button> </div> </form> </div> <div class="newsletter-success" x-show="submitted" data-astro-cid-rcfmcarr> <div class="success-icon" data-astro-cid-rcfmcarr>✓</div> <h3 data-astro-cid-rcfmcarr>Subscribed!</h3> <p data-astro-cid-rcfmcarr>Thanks for joining. See you in the inbox.</p> </div> </div> </div>   </div> </main> <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <div id="search-modal" x-data="{ 
     open: false,
     query: '',
     results: [],

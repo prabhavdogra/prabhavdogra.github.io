@@ -1,0 +1,252 @@
+---
+---
+
+<div 
+  id="newsletter-modal" 
+  x-data="{ 
+    open: false,
+    submitted: false,
+    init() {
+      // Check if already dismissed or subscribed
+      if (localStorage.getItem('newsletter_dismissed')) {
+        return;
+      }
+
+      // Show after 3 seconds
+      setTimeout(() => {
+         this.open = true;
+      }, 3000);
+    },
+    dismiss() {
+      this.open = false;
+      localStorage.setItem('newsletter_dismissed', 'true');
+    },
+    handleLoad() {
+      // This function runs when the iframe loads (after submission)
+      if (this.submitted) {
+        // Show success message or just close
+        // For now, let's just close it after a brief delay to imply success
+        setTimeout(() => {
+           this.dismiss();
+        }, 1000);
+      }
+    },
+    submitForm() {
+      this.submitted = true;
+      // The form submission is handled by the browser target='hidden_iframe'
+      // We just set the submitted flag to handle the iframe load event
+    }
+  }"
+  x-show="open"
+  x-transition:enter="transition ease-out duration-300"
+  x-transition:enter-start="opacity-0 transform scale-90"
+  x-transition:enter-end="opacity-100 transform scale-100"
+  x-transition:leave="transition ease-in duration-200"
+  x-transition:leave-start="opacity-100 transform scale-100"
+  x-transition:leave-end="opacity-0 transform scale-90"
+  class="newsletter-modal"
+  style="display: none;" 
+  :style="open ? 'display: flex' : 'display: none'"
+>
+  <div class="newsletter-backdrop" @click="dismiss()"></div>
+  
+  <div class="newsletter-container">
+    <div class="terminal-header">
+      <div class="terminal-dots">
+        <div class="dot red" @click="dismiss()"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+      </div>
+      <span class="terminal-title">subscribe.sh</span>
+    </div>
+    
+    <div class="newsletter-content" x-show="!submitted">
+      <h3>Stay Updated!</h3>
+      <p>Get the latest posts delivered straight to your inbox.</p>
+      
+      <!-- GOOGLE FORM INTEGRATION -->
+      <!-- Replace ACTION_URL with your Google Form action URL -->
+      <!-- Replace ENTRY_ID with your email input name attribute -->
+      <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" @load="handleLoad()"></iframe>
+      <form 
+        action="https://docs.google.com/forms/d/e/1FAIpQLSfZIQJga0QNT31bctskhz0S3sHPeLnTjYBUAhnufC1yEdcl-g/formResponse" 
+        method="post" 
+        target="hidden_iframe"
+        @submit="submitForm()"
+        class="newsletter-form"
+      >
+        <div class="input-group">
+          <span class="prompt">$</span>
+          <input 
+            type="email" 
+            name="entry.1831353926" 
+            placeholder="enter your email..." 
+            required
+            class="email-input"
+          >
+        </div>
+        <div class="form-actions">
+           <button type="button" @click="dismiss()" class="btn-cancel">Cancel</button>
+           <button type="submit" class="btn-submit">Subscribe</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="newsletter-success" x-show="submitted">
+      <div class="success-icon">✓</div>
+      <h3>Subscribed!</h3>
+      <p>Thanks for joining. See you in the inbox.</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .newsletter-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  
+  .newsletter-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+  }
+  
+  .newsletter-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--content-bg, #1a1b26);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    font-family: 'Fira Code', monospace;
+  }
+  
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: var(--header-bg, #24283b);
+    border-bottom: 1px solid var(--border-color, #333);
+  }
+  
+  .terminal-dots {
+    display: flex;
+    gap: 6px;
+  }
+  
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  .red { background-color: #ff5f56; }
+  .yellow { background-color: #ffbd2e; }
+  .green { background-color: #27c93f; }
+  
+  .terminal-title {
+    margin-left: 15px;
+    font-size: 0.8rem;
+    color: var(--text-muted, #9aa5ce);
+  }
+  
+  .newsletter-content, .newsletter-success {
+    padding: 25px;
+    text-align: center;
+    color: var(--text-color, #c0caf5);
+  }
+  
+  h3 {
+    margin: 0 0 10px;
+    color: var(--terminal-green, #73daca);
+    font-size: 1.2rem;
+  }
+  
+  p {
+    margin: 0 0 20px;
+    font-size: 0.9rem;
+    color: var(--text-muted, #9aa5ce);
+  }
+  
+  .input-group {
+    display: flex;
+    align-items: center;
+    background-color: var(--input-bg, #16161e);
+    border: 1px solid var(--border-color, #414868);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 15px;
+  }
+  
+  .prompt {
+    color: var(--terminal-green, #73daca);
+    margin-right: 10px;
+    font-weight: bold;
+  }
+  
+  .email-input {
+    background: transparent;
+    border: none;
+    color: var(--text-color, #c0caf5);
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+  
+  .email-input:focus {
+    outline: none;
+  }
+  
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  
+  button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  
+  .btn-cancel {
+    background: transparent;
+    color: var(--text-muted, #9aa5ce);
+    border: 1px solid transparent;
+  }
+  
+  .btn-cancel:hover {
+    color: var(--text-color, #c0caf5);
+    border-color: var(--border-color, #414868);
+  }
+  
+  .btn-submit {
+    background-color: var(--terminal-blue, #7aa2f7);
+    color: #1a1b26;
+    font-weight: bold;
+  }
+  
+  .btn-submit:hover {
+    opacity: 0.9;
+  }
+
+  .success-icon {
+    font-size: 3rem;
+    color: var(--terminal-green, #73daca);
+    margin-bottom: 10px;
+  }
+</style>

@@ -1,7 +1,6 @@
 ---
 import MainLayout from './MainLayout.astro';
 import { formatDate } from '../utils/formatDate';
-import NewsletterModal from '../components/NewsletterModal.astro';
 
 const { frontmatter } = Astro.props;
 const formattedDate = formatDate(frontmatter.date);
@@ -25,8 +24,6 @@ const formattedDate = formatDate(frontmatter.date);
       <a href="/" class="back-link">cd ..</a>
     </div>
   </article>
-  
-  <NewsletterModal />
 </MainLayout>
 
 <style>

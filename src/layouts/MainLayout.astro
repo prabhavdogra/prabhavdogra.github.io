@@ -2,6 +2,7 @@
 import Header from '../components/Header.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import SearchModal from '../components/SearchModal.astro';
+import NewsletterModal from '../components/NewsletterModal.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -44,7 +45,9 @@ if (currentPath.startsWith('/ping')) {
       </div>
     </main>
     <ThemeToggle />
+    <ThemeToggle />
     <SearchModal />
+    <NewsletterModal />
     
     <!-- Fuse.js for search -->
     <script is:inline src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>

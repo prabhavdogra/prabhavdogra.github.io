@@ -7,15 +7,23 @@
     open: false,
     submitted: false,
     init() {
+      // Listen for manual open event
+      document.addEventListener('open-newsletter', () => {
+        this.open = true;
+      });
+
       // Check if already dismissed or subscribed
       if (localStorage.getItem('newsletter_dismissed')) {
         return;
       }
 
-      // Show after 3 seconds
-      setTimeout(() => {
-         this.open = true;
-      }, 3000);
+      // Auto-open only on blog posts
+      if (window.location.pathname.startsWith('/blog/')) {
+        // Show after 3 seconds
+        setTimeout(() => {
+           this.open = true;
+        }, 3000);
+      }
     },
     dismiss() {
       this.open = false;

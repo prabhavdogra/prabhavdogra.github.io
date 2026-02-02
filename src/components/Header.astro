@@ -16,6 +16,7 @@ const currentPath = Astro.url.pathname;
       <a href="/whoami" class={`command ${currentPath === '/whoami' ? 'active' : ''}`}>whoami</a>
       <a href="/ping" class={`command ${currentPath === '/ping' ? 'active' : ''}`}>ping</a>
       <a href="/assets/resume/PrabhavDogra.pdf" target="_blank" rel="noopener noreferrer" class="command">cd ~/resume</a>
+      <button id="subscribe-button" class="command subscribe-btn">subscribe</button>
     </nav>
     <span class="prompt">$</span>
     <button id="search-button" class="search-button">
@@ -58,6 +59,14 @@ const currentPath = Astro.url.pathname;
     padding: 3px 6px;
     border-radius: 3px;
     transition: background-color 0.2s, color 0.2s;
+  }
+
+  .subscribe-btn {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
   }
   
   .command:hover {
@@ -111,5 +120,10 @@ const currentPath = Astro.url.pathname;
   
   searchButton?.addEventListener('click', () => {
     document.dispatchEvent(new CustomEvent('toggle-search'));
+  });
+
+  const subscribeButton = document.getElementById('subscribe-button');
+  subscribeButton?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('open-newsletter'));
   });
 </script>

@@ -1,50 +1,124 @@
-<!DOCTYPE html><html lang="en" data-astro-cid-ouamjn2i> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="A terminal-styled developer blog"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>CDN Caching</title><link rel="stylesheet" href="/_astro/_slug_.CL-Sj1Q3.css">
+<!DOCTYPE html><html lang="en" data-astro-cid-ouamjn2i> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="A terminal-styled developer blog"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>Everything You Need to Know About CDN Caching</title><link rel="stylesheet" href="/_astro/_slug_.CL-Sj1Q3.css">
 <link rel="stylesheet" href="/_astro/_slug_.TTX37v3e.css"><script type="module">const n=document.getElementById("search-button");n?.addEventListener("click",()=>{document.dispatchEvent(new CustomEvent("toggle-search"))});const c=document.getElementById("subscribe-button");c?.addEventListener("click",()=>{document.dispatchEvent(new CustomEvent("open-newsletter"))});const s=document.getElementById("theme-toggle"),o=window.matchMedia("(prefers-color-scheme: dark)").matches,e=localStorage.getItem("theme");(e==="dark"||!e&&o)&&document.documentElement.classList.add("dark-theme");s?.addEventListener("click",()=>{const t=document.documentElement.classList.toggle("dark-theme");localStorage.setItem("theme",t?"dark":"light")});
 </script>
 <script type="module" src="/_astro/page.DZtx3eTe.js"></script></head> <body data-astro-cid-ouamjn2i> <header class="header" data-astro-cid-3ef6ksr2> <div class="terminal-header" data-astro-cid-3ef6ksr2> <div class="terminal-dots" data-astro-cid-3ef6ksr2> <div class="dot red" data-astro-cid-3ef6ksr2></div> <div class="dot yellow" data-astro-cid-3ef6ksr2></div> <div class="dot green" data-astro-cid-3ef6ksr2></div> </div> <nav class="terminal-nav" data-astro-cid-3ef6ksr2> <a href="/" class="command " data-astro-cid-3ef6ksr2>cd ~</a> <a href="/blog" class="command active" data-astro-cid-3ef6ksr2>cd ~/blog</a> <a href="/random" class="command " data-astro-cid-3ef6ksr2>rand</a> <a href="/whoami" class="command " data-astro-cid-3ef6ksr2>whoami</a> <a href="/ping" class="command " data-astro-cid-3ef6ksr2>ping</a> <a href="/assets/resume/PrabhavDogra.pdf" target="_blank" rel="noopener noreferrer" class="command" data-astro-cid-3ef6ksr2>cd ~/resume</a> <button id="subscribe-button" class="command subscribe-btn" data-astro-cid-3ef6ksr2>subscribe</button> </nav> <span class="prompt" data-astro-cid-3ef6ksr2>$</span> <button id="search-button" class="search-button" data-astro-cid-3ef6ksr2>
-search <span class="search-term" data-astro-cid-3ef6ksr2>--query='search term'</span> </button> </div> </header>   <main class="container" data-astro-cid-ouamjn2i> <div class="content" data-astro-cid-ouamjn2i> <div class="blog-title" data-astro-cid-ouamjn2i>~/blog</div>   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous"> <div class="blog-path" data-astro-cid-4dqtj3le>~/blog/cdn-caching</div> <article class="blog-post" data-astro-cid-4dqtj3le> <h1 class="blog-post-title" data-astro-cid-4dqtj3le>CDN Caching</h1> <div class="blog-post-date" data-astro-cid-4dqtj3le>📅 August 8, 2025</div> <div class="blog-post-content markdown-content" data-astro-cid-4dqtj3le>  <h1 id="starting-from-scratch">Starting from scratch</h1>
-<p>When you enter <code>chatgpt.com</code> what happens next?</p>
+search <span class="search-term" data-astro-cid-3ef6ksr2>--query='search term'</span> </button> </div> </header>   <main class="container" data-astro-cid-ouamjn2i> <div class="content" data-astro-cid-ouamjn2i> <div class="blog-title" data-astro-cid-ouamjn2i>~/blog</div>   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous"> <div class="blog-path" data-astro-cid-4dqtj3le>~/blog/everything-you-need-to-know-about-cdn-caching</div> <article class="blog-post" data-astro-cid-4dqtj3le> <h1 class="blog-post-title" data-astro-cid-4dqtj3le>Everything You Need to Know About CDN Caching</h1> <div class="blog-post-date" data-astro-cid-4dqtj3le>📅 February 2, 2026</div> <div class="blog-post-content markdown-content" data-astro-cid-4dqtj3le>  <p>Have you ever wondered why Netflix loads instantly while some random website takes forever? The secret sauce is often a <strong>CDN</strong> (Content Delivery Network).</p>
+<p>In this deep dive, we’ll explain how the web actually works, what CDNs are, and how caching makes sure you get your memes at light speed.</p>
+<h2 id="the-journey-of-a-request">The Journey of a Request</h2>
+<p>Before we talk about CDNs, let’s look at what happens when you type <code>google.com</code> into your browser. It’s a journey across the world.</p>
+<h3 id="1-where-do-i-go-dns-lookup">1. Where do I go? (DNS Lookup)</h3>
+<p>Your computer doesn’t know where “google.com” lives. It only speaks in numbers (IP addresses like <code>142.250.190.46</code>).</p>
 <ol>
-<li>Browser Checks if You Typed a Search or a URL</li>
+<li><strong>Browser Cache</strong>: “Have I been here recently?” (Check <code>chrome://net-internals/#dns</code>).</li>
+<li><strong>OS Cache</strong>: “Does my operating system know?”</li>
+<li><strong>Resolver</strong>: Your ISP’s DNS server goes hunting. It asks the Root servers, then the Top-Level Domain (<code>.com</code>) servers, and finally gets the IP address.</li>
 </ol>
+<h3 id="2-the-long-haul-latency">2. The Long Haul (Latency)</h3>
+<p>Once your browser has the IP, it sends a request to that server.</p>
 <ul>
-<li>If what you typed looks like a URL (e.g., has .com), the browser treats it as a website address.</li>
-<li>If not, it sends it directly to your default search engine.</li>
+<li>If you are in <strong>New York</strong> and the server is in <strong>London</strong>, that request has to travel under the Atlantic Ocean.</li>
+<li>Light is fast, but physics is physics. That round trip takes time (latency).</li>
+<li>Multiply that by 100 images, fonts, and scripts on a page, and your site feels slow.</li>
 </ul>
-<ol start="2">
-<li>Browser Checks Local Cache (DNS Cache)</li>
+<hr>
+<h2 id="enter-the-cdn-the-pizza-problem">Enter the CDN (The Pizza Problem)</h2>
+<p>Imagine you own a famous Pizza shop in <strong>Italy</strong> 🇮🇹.
+People in <strong>New York</strong> 🇺🇸 want your pizza.</p>
+<p><strong>Option A: The Old Way</strong>
+Every time a New Yorker orders, you bake it in Italy and ship it via supersonic jet.</p>
+<ul>
+<li><strong>Pros</strong>: Authentic.</li>
+<li><strong>Cons</strong>: Cold pizza, huge shipping costs, takes hours.</li>
+</ul>
+<p><strong>Option B: The CDN Way</strong>
+You open a “delivery node” (Edge Server) in <strong>New York</strong>.
+You ship a batch of frozen pizzas (Cache) to New York once.
+When a New Yorker orders, the local shop heats one up and delivers it in 20 minutes.</p>
+<ul>
+<li><strong>Pros</strong>: Hot pizza, instant delivery, happy customers.</li>
+</ul>
+<p><strong>This is a Content Delivery Network.</strong> It’s a network of servers placed physically closer to the user to reduce the distance data has to travel.</p>
+<hr>
+<h2 id="how-caching-works">How Caching Works</h2>
+<p>In the CDN world, we have two main players:</p>
+<ol>
+<li><strong>Origin Server</strong>: Your main server (The kitchen in Italy). It has the “source of truth.”</li>
+<li><strong>Edge Server</strong>: The CDN server near the user (The shop in New York).</li>
 </ol>
+<h3 id="the-flow">The Flow</h3>
+<ol>
+<li><strong>User Request</strong>: You ask for <code>logo.png</code>.</li>
+<li><strong>Edge Check</strong>: The CDN near you checks its storage. “Do I have <code>logo.png</code>?”</li>
+<li><strong>Cache Miss</strong>: “Nope, I don’t.”
 <ul>
-<li>Your computer keeps a small memory (cache) of recent domain name lookups. You can check this on <code>chrome://net-internals/#dns</code></li>
-<li>If you’ve visited <code>chatgpt.com</code> recently, your OS/browser might already know its IP address (e.g., 172.64.155.209).</li>
-<li>If it finds it, it skips to Step 5.</li>
+<li>The Edge asks the <strong>Origin</strong>: “Hey, give me <code>logo.png</code>.”</li>
+<li>The Origin sends it.</li>
+<li><strong>Crucial Step</strong>: The Edge <em>saves a copy</em> (caches it).</li>
+<li>The Edge sends it to you.</li>
 </ul>
-<p>DNS Servers</p>
-<ol start="3">
-<li>DNS Lookup (Finding ChatGPT’s IP)
-If your computer doesn’t know the IP address:</li>
+</li>
+<li><strong>Cache Hit</strong>: Next time you (or your neighbor) ask for <code>logo.png</code>:
+<ul>
+<li>The Edge says: “Yep, got it right here!”</li>
+<li>It serves it immediately without bothering the Origin.</li>
+</ul>
+</li>
 </ol>
+<hr>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-cache-hit-vs-cache-miss">1. Cache Hit vs. Cache Miss</h3>
 <ul>
-<li>
-<p>Browser asks the OS → OS asks the DNS resolver (usually from your ISP or a custom one like Google DNS 8.8.8.8 or Cloudflare 1.1.1.1).</p>
-</li>
-<li>
-<p>Resolver asks the root DNS servers → finds .com name servers.</p>
-</li>
-<li>
-<p>.com name servers point to Google’s authoritative DNS (more) servers.</p>
-</li>
-<li>
-<p>Resolver asks Google’s DNS → gets back the IP for google.com.</p>
-</li>
-<li>
-<p>This IP is stored in the cache for next time.</p>
-</li>
+<li><strong>Hit</strong>: The content was found on the Edge server. Fast! ⚡</li>
+<li><strong>Miss</strong>: The content wasn’t there. The Edge had to fetch it from the Origin. Slower. 🐢</li>
 </ul>
-<h1 id="cdn-caching">CDN Caching</h1>
-<h2 id="what-is-cdn-caching">What is CDN Caching?</h2>
-<h2 id="how-does-cdn-caching-work">How does CDN Caching work?</h2>
-<h2 id="how-to-implement-cdn-caching">How to implement CDN Caching?</h2>  </div> <div class="blog-post-nav" data-astro-cid-4dqtj3le> <a href="/" class="back-link" data-astro-cid-4dqtj3le>cd ..</a> </div> </article>  </div> </main> <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <div id="search-modal" x-data="{ 
+<h3 id="2-ttl-time-to-live">2. TTL (Time To Live)</h3>
+<p>How long should the Edge keep that pizza? You don’t want to serve 3-year-old moldy pizza.
+<strong>TTL</strong> determines the “freshness.”</p>
+<ul>
+<li>If TTL is <strong>1 hour</strong>, the Edge deletes the copy after hour.</li>
+<li>The next request triggers a “Miss,” fetches a fresh copy from Origin, and resets the timer.</li>
+</ul>
+<h3 id="3-eviction">3. Eviction</h3>
+<p>Edge servers have limited hard drive space. When they get full, they have to delete old stuff to make room for new popular stuff. This is usually done with an <strong>LRU</strong> (Least Recently Used) algorithm.</p>
+<hr>
+<h2 id="controlling-the-cache-headers">Controlling the Cache (Headers)</h2>
+<p>As a developer, you tell the CDN how to behave using <strong>HTTP Headers</strong>.</p>
+<h3 id="cache-control-max-age3600"><code>Cache-Control: max-age=3600</code></h3>
+<p>“Keep this file for 3600 seconds (1 hour).”</p>
+<h3 id="cache-control-public"><code>Cache-Control: public</code></h3>
+<p>“Anyone can cache this.” (Good for generic images).</p>
+<h3 id="cache-control-private"><code>Cache-Control: private</code></h3>
+<p>“Only the user’s browser can cache this, NOT the CDN.”</p>
+<ul>
+<li><strong>Use case</strong>: A page showing “Hello, Prabhav”. You don’t want the CDN to cache that and show “Hello, Prabhav” to the next person named Sarah.</li>
+</ul>
+<h3 id="cache-control-no-store"><code>Cache-Control: no-store</code></h3>
+<p>“Do not save this anywhere. Ever.” (Good for banking data).</p>
+<hr>
+<h2 id="static-vs-dynamic-content">Static vs. Dynamic Content</h2>
+<p><strong>Static Content (Cache It!)</strong>
+Files that don’t change often for different users.</p>
+<ul>
+<li>Images (<code>logo.png</code>)</li>
+<li>CSS/JS files (<code>styles.css</code>)</li>
+<li>Fonts</li>
+<li>Videos</li>
+</ul>
+<p><strong>Dynamic Content (Careful!)</strong>
+Content generated on the fly.</p>
+<ul>
+<li>API responses (<code>/api/user/profile</code>)</li>
+<li>Shopping cart data</li>
+<li>Real-time stock prices</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>CDNs are the backbone of a fast internet. They:</p>
+<ol>
+<li><strong>Reduce Latency</strong>: Bringing content closer to you.</li>
+<li><strong>Reduce Load</strong>: Saving the Origin server from handling every single request.</li>
+<li><strong>Increase Reliability</strong>: If one node goes down, another takes over.</li>
+</ol>
+<p>Next time <code>netflix.com</code> loads instantly, thank a CDN!</p>  </div> <div class="blog-post-nav" data-astro-cid-4dqtj3le> <a href="/" class="back-link" data-astro-cid-4dqtj3le>cd ..</a> </div> </article>  </div> </main> <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <div id="search-modal" x-data="{ 
     open: false,
     query: '',
     results: [],

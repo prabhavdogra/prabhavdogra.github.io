@@ -8,6 +8,9 @@ Have you ever wondered how your code *actually* runs? We type high-level syntax,
 
 Meet **RunMeMaybe** (rmm)—a lightweight, stack-based VM that features a custom assembly language, a preprocessor with macro support, and a growing ecosystem of tools.
 
+> [!NOTE]
+> This project is heavily inspired by [tim](https://github.com/CobbCoding1/tim) by CobbCoding.
+
 ## Why Build a VM?
 
 Building a VM is one of the best ways to demystify the internal workings of computers and compilers. It forces you to think about:

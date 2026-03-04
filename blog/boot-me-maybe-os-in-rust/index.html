@@ -120,7 +120,7 @@ flowchart TD
     D --> E
     E -->|❌ No| F
     E -->|✓ Yes| G
-    G --> H["🚀 Load &#x26; Start OS Kernel"]
+    G --> H["🚀 Bootloader: Load &#x26; Start OS Kernel"]
 
     style FW fill:none,stroke:#ffffff,stroke-width:3px,stroke-dasharray: 8 6
     style A fill:#444,stroke:#222,stroke-width:3px,color:#fff,font-weight:bold
@@ -157,6 +157,102 @@ flowchart TD
 <li><strong>“Basic Input/Output System“ (BIOS)</strong> The BIOS standard is old and outdated, but simple and well-supported on any x86 machine since the 1980s.</li>
 <li><strong>“Unified Extensible Firmware Interface” (UEFI)</strong> UEFI, in contrast, is more modern and has much more features, but is more complex to set up.</li>
 </ol>
+<h2 id="bootloader">Bootloader:</h2>
+<p>When BIOS finds a bootable device, it:</p>
+<ul>
+<li>
+<p>Reads the first 512 bytes from the disk. Those 512 bytes are called <strong>Master Boot Record (MBR)</strong></p>
+<p><strong>Why Only 512 Bytes?</strong></p>
+<p>Because the BIOS boot protocol is ancient.</p>
+</li>
+<li>
+<p>Loads it to memory at address <code>0x7C00</code></p>
+</li>
+<li>
+<p>Jumps to it</p>
+</li>
+</ul>
+<p>Because the BIOS boot protocol is very old, it only loads these 512 bytes initially. Since this space is too small for a full bootloader, most bootloaders use multiple stages: a tiny first stage in the MBR that loads a larger second stage.</p>
+<p>The bootloader’s responsibilities are:</p>
+<ul>
+<li>
+<p>Locate the OS kernel image on disk and load it into memory.</p>
+</li>
+<li>
+<p>Switch the CPU from 16-bit real mode → 32-bit protected mode → 64-bit long mode, enabling full memory access and 64-bit registers.</p>
+<p><strong>Real Mode: (16-bit):</strong>
+This is the legacy state the CPU enters immediately after power-on. It mimics the original Intel 8086 processor.</p>
+<ul>
+<li><strong>Registers:</strong> Limited to 16 bit registers.</li>
+<li><strong>Memory Access:</strong> You can only access about 1 MB of RAM.</li>
+<li><strong>Security:</strong> There is no memory protection. Any code can write to any part of memory, including the BIOS or other programs.</li>
+</ul>
+<div class="markdown-alert markdown-alert-note" dir="auto">
+<p class="markdown-alert-title" dir="auto"><svg class="octicon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>NOTE</p>
+<p><strong>1MB of RAM How?</strong></p>
+<p>The original 8086 CPU had:</p>
+<ul>
+<li>16-bit registers</li>
+<li>But a 20-bit address bus
+<ul>
+<li>An address bus is the set of physical wires the CPU uses to denote a memory address to RAM.</li>
+</ul>
+</li>
+</ul>
+<p>Why?
+Because Intel wanted:</p>
+<ul>
+<li>Cheap 16-bit internal design</li>
+<li>But ability to address more than 64KB</li>
+</ul>
+<p>A 16-bit register alone can only address:</p>
+<ul>
+<li><code>2^16 = 65,536 bytes = 64KB</code></li>
+<li>But Intel wanted:</li>
+<li><code>2^20 = 1,048,576 bytes = 1MB</code></li>
+</ul>
+<p>The Trick: Segmentation
+Instead of increasing register size, they introduced:</p>
+<ul>
+<li>16-bit segment register</li>
+<li>4-bit offset register</li>
+</ul>
+<p>And combined 2 registers (16-bit + 4-bit) to produce a 20-bit physical address.</p>
+</div>
+<p><strong>Protected Mode: (32-bit):</strong>
+In this mode, programs are isolated. The CPU enforces boundaries.</p>
+<ul>
+<li><strong>Registers:</strong> Limited to 32 bit registers.</li>
+<li><strong>Memory Access:</strong> You can only access about 4 GB of RAM.</li>
+<li><strong>Security:</strong> Introduces different hardware-enforced access levels.
+<strong>Ring 0:</strong> Kernel run here, has full control
+<strong>Ring 3:</strong> User applications run here, restricted access, can’t access kernel memory, can’t run privileged instructions.</li>
+</ul>
+<p>If somebody tries to write in kernel:</p>
+<ul>
+<li>CPU immediately stops execution</li>
+<li>Raises a <strong>General Protection Fault (GPF)</strong></li>
+<li>OS kills the process</li>
+</ul>
+<p><strong>Long Mode (64-bit):</strong><br>
+This is the modern 64-bit operating mode used by today’s operating systems.<br>
+It provides a massive virtual address space, mandatory paging, and stronger memory control.</p>
+<ul>
+<li>
+<p><strong>Registers:</strong> Expanded to 64-bit registers (<code>RAX</code>, <code>RBX</code>, etc.), plus additional registers (<code>R8–R15</code>).<br>
+This allows direct 64-bit arithmetic and much larger integer values.</p>
+</li>
+<li>
+<p><strong>Memory Access:</strong> Theoretical limit is extremely large (2⁶⁴ bytes).<br>
+Practically, current CPUs use 48-bit virtual addressing (≈256 TB of virtual memory).<br>
+Paging is mandatory — all memory access goes through page tables.</p>
+</li>
+<li>
+<p><strong>Security:</strong> Same differen hardware-enforced access levels as protected mode.</p>
+</li>
+</ul>
+</li>
+</ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>With these pieces in place—<code>no_std</code>, a custom panic handler, strictly defined entry point, and the correct target—<code>boot-me-maybe-os</code> can now be built as a standalone binary ready for bare-metal execution. The next steps will involve interacting with hardware and getting something to appear on the screen!</p>  </div> <div class="blog-post-nav" data-astro-cid-4dqtj3le> <a href="/" class="back-link" data-astro-cid-4dqtj3le>cd ..</a> </div> </article>  </div> </main> <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <div id="search-modal" x-data="{ 
     open: false,

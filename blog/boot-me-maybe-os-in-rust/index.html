@@ -102,32 +102,42 @@ Since we are cross-compiling: writing code on your PC to run on a completely dif
 To achieve this, we define a Freestanding Target in .cargo/config.toml:</p>
 <div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">config.toml</span></figcaption><pre data-language="toml"><code><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">[</span><span style="--0:#B392F0;--1:#6F42C1">build</span><span style="--0:#E1E4E8;--1:#24292E">]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">target = </span><span style="--0:#9ECBFF;--1:#032F62">"thumbv7em-none-eabihf"</span></div></div></code></pre><div class="copy"><button title="Copy to clipboard" data-copied="Copied!" data-code="[build]target = &#x22;thumbv7em-none-eabihf&#x22;"><div></div></button></div></figure></div>
 <p>We will discuss this in depth later.</p>
-<h3 id="detailed-firmware-execution">Detailed Firmware Execution</h3>
+<h3 id="system-startup-flow">System Startup Flow</h3>
 <pre class="mermaid">%%{init: {'flowchart': {'htmlLabels': true}, 'theme': 'dark'}}%%
 flowchart TD
-    A["💾 Firmware Code&#x3C;br/>in Motherboard ROM"] --> B["🧪 Perform&#x3C;br/>Power-On Self-Test"]
-    B --> C{"✓ Test&#x3C;br/>Passed?"}
-    C -->|❌ No| D["⛔ Halt System"]
-    C -->|✓ Yes| E["🧠 Detect Available&#x3C;br/>RAM"]
-    E --> F["⚡ Pre-Initialize&#x3C;br/>CPU &#x26; Hardware"]
-    F --> G["💾 Look for&#x3C;br/>Bootable Disk"]
-    G --> H{"✓ Bootable&#x3C;br/>Found?"}
-    H -->|❌ No| I["⚠️ No Boot Device&#x3C;br/>Found"]
-    H -->|✓ Yes| J["🚀 Start Booting&#x3C;br/>OS Kernel"]
-    
-    style A fill:#1a472a,stroke:#0f2b1a,stroke-width:3px,color:#fff,font-weight:bold
-    style B fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style C fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
-    style D fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
-    style E fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
-    style F fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
-    style G fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style H fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
-    style I fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
-    style J fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold</pre>
-<p>When you turn on a computer, it begins executing firmware code that is stored in motherboard ROM. This code performs a power-on self-test, detects available RAM, and pre-initializes the CPU and hardware. Afterwards, it looks for a bootable disk and starts booting the operating system kernel.</p>
-<p>When we turn on a computer, the machine undergoes a critical initialization phase known as the <strong>Power-On Self-Test (POST)</strong>
-<strong>Power-On Self-Test (POST)</strong> checks the following:</p>
+    A["🔌 Power On / CPU Reset"] --> B["💾 CPU Jumps to&#x3C;br/>Reset Vector"]
+
+    subgraph FW["🧠 Firmware (BIOS / UEFI)"]
+        C["Start Firmware Execution"]
+        D["🧪 Perform Power-On Self-Test"]
+        E{"✓ Power-On Self-Test Passed?"}
+        F["⛔ Halt System"]
+        G["🔍 Initialize Hardware&#x3C;br/>Find Boot Device"]
+    end
+
+    B --> C
+    C --> D
+    D --> E
+    E -->|❌ No| F
+    E -->|✓ Yes| G
+    G --> H["🚀 Load &#x26; Start OS Kernel"]
+
+    style FW fill:none,stroke:#ffffff,stroke-width:3px,stroke-dasharray: 8 6
+    style A fill:#444,stroke:#222,stroke-width:3px,color:#fff,font-weight:bold
+    style B fill:#1a472a,stroke:#0f2b1a,stroke-width:3px,color:#fff,font-weight:bold
+    style C fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
+    style D fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
+    style E fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
+    style F fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
+    style G fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
+    style H fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold</pre>
+<p>When you turn on a computer, the following steps happen in the following order:</p>
+<ol>
+<li><strong>CPU resets:</strong> All registers are set to predefined values.</li>
+<li><strong>Read Firmware (BIOS/UEFI):</strong> After reset, Firmware runs from motherboard ROM, the CPU immediately begins executing instructions from a fixed physical address called the reset vector.</li>
+<li>Firmware Execution: It starts executing immediately.
+<ul>
+<li>One of the first things firmware does is run <strong>Power-On Self-Test (POST)</strong>. In which it checks:
 <ul>
 <li>CPU basic functionality</li>
 <li>RAM presence</li>
@@ -135,29 +145,18 @@ flowchart TD
 <li>Keyboard controller</li>
 <li>Essential peripherals</li>
 </ul>
-<h2 id="the-boot-process">The Boot Process</h2>
-<p>When power is first applied, the firmware (BIOS or UEFI) wakes up and verifies that the hardware components—such as the CPU, RAM, and peripherals—are functioning correctly. If any critical component fails, the system halts. If the checks pass, the firmware then looks for a bootable device (like a hard drive or USB) to load the bootloader from.</p>
-<p>To visualize how we get to our <code>_start</code> function, here is a simplified view of the boot process:</p>
-<pre class="mermaid">%%{init: {'flowchart': {'htmlLabels': true}, 'theme': 'dark'}}%%
-flowchart TD
-    A["⚡ Power Button&#x3C;br/>Pressed"] --> B["🔌 Power Supplied&#x3C;br/>to Motherboard"]
-    B --> C["🖥️ Firmware Starts&#x3C;br/>BIOS or UEFI"]
-    C --> D["🧪 Power-On&#x3C;br/>Self-Test"]
-    D --> E{"✓ Hardware&#x3C;br/>Check OK?"}
-    E -->|❌ No| F["⛔ System Halt"]
-    E -->|✓ Yes| G["⚙️ Initialize&#x3C;br/>Hardware"]
-    G --> H["🔍 Search for&#x3C;br/>Bootable Device"]
-    H --> I["📦 Load&#x3C;br/>Bootloader"]
-    
-    style A fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style B fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style C fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style D fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style E fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
-    style F fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
-    style G fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
-    style H fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
-    style I fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold</pre>
+</li>
+</ul>
+</li>
+<li>If POST succeeds → firmware continues boot process.</li>
+<li>Firmware loads bootloader / OS.</li>
+</ol>
+<h2 id="firmware">Firmware</h2>
+<p>There are two firmware standards:</p>
+<ol>
+<li><strong>“Basic Input/Output System“ (BIOS)</strong> The BIOS standard is old and outdated, but simple and well-supported on any x86 machine since the 1980s.</li>
+<li><strong>“Unified Extensible Firmware Interface” (UEFI)</strong> UEFI, in contrast, is more modern and has much more features, but is more complex to set up.</li>
+</ol>
 <h2 id="conclusion">Conclusion</h2>
 <p>With these pieces in place—<code>no_std</code>, a custom panic handler, strictly defined entry point, and the correct target—<code>boot-me-maybe-os</code> can now be built as a standalone binary ready for bare-metal execution. The next steps will involve interacting with hardware and getting something to appear on the screen!</p>  </div> <div class="blog-post-nav" data-astro-cid-4dqtj3le> <a href="/" class="back-link" data-astro-cid-4dqtj3le>cd ..</a> </div> </article>  </div> </main> <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <div id="search-modal" x-data="{ 
     open: false,

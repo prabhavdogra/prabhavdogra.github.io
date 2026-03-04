@@ -127,71 +127,56 @@ target = "thumbv7em-none-eabihf"
 
 We will discuss this in depth later.
 
-### Detailed Firmware Execution
-
+### System Startup Flow
 ```mermaid
 %%{init: {'flowchart': {'htmlLabels': true}, 'theme': 'dark'}}%%
 flowchart TD
-    A["💾 Firmware Code<br/>in Motherboard ROM"] --> B["🧪 Perform<br/>Power-On Self-Test"]
-    B --> C{"✓ Test<br/>Passed?"}
-    C -->|❌ No| D["⛔ Halt System"]
-    C -->|✓ Yes| E["🧠 Detect Available<br/>RAM"]
-    E --> F["⚡ Pre-Initialize<br/>CPU & Hardware"]
-    F --> G["💾 Look for<br/>Bootable Disk"]
-    G --> H{"✓ Bootable<br/>Found?"}
-    H -->|❌ No| I["⚠️ No Boot Device<br/>Found"]
-    H -->|✓ Yes| J["🚀 Start Booting<br/>OS Kernel"]
-    
-    style A fill:#1a472a,stroke:#0f2b1a,stroke-width:3px,color:#fff,font-weight:bold
-    style B fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style C fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
-    style D fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
-    style E fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
-    style F fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
-    style G fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style H fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
-    style I fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
-    style J fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
-```
-When you turn on a computer, it begins executing firmware code that is stored in motherboard ROM. This code performs a power-on self-test, detects available RAM, and pre-initializes the CPU and hardware. Afterwards, it looks for a bootable disk and starts booting the operating system kernel.
+    A["🔌 Power On / CPU Reset"] --> B["💾 CPU Jumps to<br/>Reset Vector"]
 
-When we turn on a computer, the machine undergoes a critical initialization phase known as the **Power-On Self-Test (POST)**
-**Power-On Self-Test (POST)** checks the following:
-- CPU basic functionality
-- RAM presence
-- GPU
-- Keyboard controller
-- Essential peripherals
+    subgraph FW["🧠 Firmware (BIOS / UEFI)"]
+        C["Start Firmware Execution"]
+        D["🧪 Perform Power-On Self-Test"]
+        E{"✓ Power-On Self-Test Passed?"}
+        F["⛔ Halt System"]
+        G["🔍 Initialize Hardware<br/>Find Boot Device"]
+    end
 
-## The Boot Process
+    B --> C
+    C --> D
+    D --> E
+    E -->|❌ No| F
+    E -->|✓ Yes| G
+    G --> H["🚀 Load & Start OS Kernel"]
 
-
-When power is first applied, the firmware (BIOS or UEFI) wakes up and verifies that the hardware components—such as the CPU, RAM, and peripherals—are functioning correctly. If any critical component fails, the system halts. If the checks pass, the firmware then looks for a bootable device (like a hard drive or USB) to load the bootloader from.
-
-To visualize how we get to our `_start` function, here is a simplified view of the boot process:
-
-```mermaid
-%%{init: {'flowchart': {'htmlLabels': true}, 'theme': 'dark'}}%%
-flowchart TD
-    A["⚡ Power Button<br/>Pressed"] --> B["🔌 Power Supplied<br/>to Motherboard"]
-    B --> C["🖥️ Firmware Starts<br/>BIOS or UEFI"]
-    C --> D["🧪 Power-On<br/>Self-Test"]
-    D --> E{"✓ Hardware<br/>Check OK?"}
-    E -->|❌ No| F["⛔ System Halt"]
-    E -->|✓ Yes| G["⚙️ Initialize<br/>Hardware"]
-    G --> H["🔍 Search for<br/>Bootable Device"]
-    H --> I["📦 Load<br/>Bootloader"]
-    
-    style A fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style B fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
+    style FW fill:none,stroke:#ffffff,stroke-width:3px,stroke-dasharray: 8 6
+    style A fill:#444,stroke:#222,stroke-width:3px,color:#fff,font-weight:bold
+    style B fill:#1a472a,stroke:#0f2b1a,stroke-width:3px,color:#fff,font-weight:bold
     style C fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
-    style D fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
+    style D fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
     style E fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
     style F fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
     style G fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
     style H fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
-    style I fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
 ```
+
+When you turn on a computer, the following steps happen in the following order:
+1. **CPU resets:** All registers are set to predefined values.
+2. **Read Firmware (BIOS/UEFI):** After reset, Firmware runs from motherboard ROM, the CPU immediately begins executing instructions from a fixed physical address called the reset vector.
+3. Firmware Execution: It starts executing immediately.
+    - One of the first things firmware does is run **Power-On Self-Test (POST)**. In which it checks:
+        - CPU basic functionality
+        - RAM presence
+        - GPU
+        - Keyboard controller
+        - Essential peripherals
+4. If POST succeeds → firmware continues boot process.
+5. Firmware loads bootloader / OS.
+
+## Firmware
+There are two firmware standards: 
+1. **“Basic Input/Output System“ (BIOS)** The BIOS standard is old and outdated, but simple and well-supported on any x86 machine since the 1980s.
+2. **“Unified Extensible Firmware Interface” (UEFI)** UEFI, in contrast, is more modern and has much more features, but is more complex to set up.
+
 
 ## Conclusion
 

@@ -1,0 +1,262 @@
+<!DOCTYPE html><html lang="en" data-astro-cid-ouamjn2i> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="A terminal-styled developer blog"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>BootMeMaybe: An Operating System in Rust</title><link rel="stylesheet" href="/_astro/_slug_.C-q5j16L.css">
+<link rel="stylesheet" href="/_astro/_slug_.TTX37v3e.css"><script type="module">const n=document.getElementById("search-button");n?.addEventListener("click",()=>{document.dispatchEvent(new CustomEvent("toggle-search"))});const c=document.getElementById("subscribe-button");c?.addEventListener("click",()=>{document.dispatchEvent(new CustomEvent("open-newsletter"))});const s=document.getElementById("theme-toggle"),o=window.matchMedia("(prefers-color-scheme: dark)").matches,e=localStorage.getItem("theme");(e==="dark"||!e&&o)&&document.documentElement.classList.add("dark-theme");s?.addEventListener("click",()=>{const t=document.documentElement.classList.toggle("dark-theme");localStorage.setItem("theme",t?"dark":"light")});
+</script>
+<script type="module" src="/_astro/page.BgmYUauk.js"></script></head> <body data-astro-cid-ouamjn2i> <header class="header" data-astro-cid-3ef6ksr2> <div class="terminal-header" data-astro-cid-3ef6ksr2> <div class="terminal-dots" data-astro-cid-3ef6ksr2> <div class="dot red" data-astro-cid-3ef6ksr2></div> <div class="dot yellow" data-astro-cid-3ef6ksr2></div> <div class="dot green" data-astro-cid-3ef6ksr2></div> </div> <nav class="terminal-nav" data-astro-cid-3ef6ksr2> <a href="/" class="command " data-astro-cid-3ef6ksr2>cd ~</a> <a href="/blog" class="command active" data-astro-cid-3ef6ksr2>cd ~/blog</a> <a href="/random" class="command " data-astro-cid-3ef6ksr2>rand</a> <a href="/whoami" class="command " data-astro-cid-3ef6ksr2>whoami</a> <a href="/ping" class="command " data-astro-cid-3ef6ksr2>ping</a> <a href="/assets/resume/PrabhavDogra.pdf" target="_blank" rel="noopener noreferrer" class="command" data-astro-cid-3ef6ksr2>cd ~/resume</a> <button id="subscribe-button" class="command subscribe-btn" data-astro-cid-3ef6ksr2>subscribe</button> </nav> <span class="prompt" data-astro-cid-3ef6ksr2>$</span> <button id="search-button" class="search-button" data-astro-cid-3ef6ksr2>
+search <span class="search-term" data-astro-cid-3ef6ksr2>--query='search term'</span> </button> </div> </header>   <main class="container" data-astro-cid-ouamjn2i> <div class="content" data-astro-cid-ouamjn2i> <div class="blog-title" data-astro-cid-ouamjn2i>~/blog</div>   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous"> <div class="blog-path" data-astro-cid-4dqtj3le>~/blog/bootmemaybe:-an-operating-system-in-rust</div> <article class="blog-post" data-astro-cid-4dqtj3le> <h1 class="blog-post-title" data-astro-cid-4dqtj3le>BootMeMaybe: An Operating System in Rust</h1> <div class="blog-post-date" data-astro-cid-4dqtj3le>📅 February 9, 2026</div> <div class="blog-post-content markdown-content" data-astro-cid-4dqtj3le>  <p>When starting an OS project, the first hurdle is breaking free from the existing operating system. By default, Rust programs link against <code>std</code>, which relies on an operating system for threads, files, networking, io streams, and memory allocation. But when you <em>are</em> making the operating system, you can’t rely on these features.</p>
+<p>This post walks through the initial setup of <code>boot-me-maybe-os</code> as a freestanding Rust binary.</p>
+<h2 id="part-1-disabling-the-standard-library">Part 1: Disabling the Standard Library</h2>
+<p>To run on bare metal, we need to disable the standard library. This is done by adding the <code>#![no_std]</code> attribute:</p>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.y0rd3.css"><script type="module" src="/_astro/ec.8zarh.js"></script><figure class="frame"><figcaption class="header"></figcaption><pre data-language="rust"><code><div class="ec-line"><div class="code"><span style="--0:#99A0A6;--1:#616972">// Removing the use of std rust library for creating a freestanding rust binary</span></div></div><div class="ec-line"><div class="code"><span style="--0:#99A0A6;--1:#616972">// This binary doesn't use any of the operating system functionalities</span></div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">#![no_std]</span></div></div></code></pre><div class="copy"><button title="Copy to clipboard" data-copied="Copied!" data-code="// Removing the use of std rust library for creating a freestanding rust binary// This binary doesn&#x27;t use any of the operating system functionalities#![no_std]"><div></div></button></div></figure></div>
+<h2 id="the-panic-handler">The Panic Handler</h2>
+<p>The standard library provides a panic handler that prints a message to standard output. Without <code>std</code>, we must define our own. For <code>boot-me-maybe-os</code>, we want a minimal panic handler that simply loops forever:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="rust"><code><div class="ec-line"><div class="code"><span style="--0:#F97583;--1:#BF3441">use</span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#B392F0;--1:#6F42C1">core</span><span style="--0:#F97583;--1:#BF3441">::</span><span style="--0:#B392F0;--1:#6F42C1">panic</span><span style="--0:#F97583;--1:#BF3441">::</span><span style="--0:#B392F0;--1:#6F42C1">PanicInfo</span><span style="--0:#E1E4E8;--1:#24292E">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#99A0A6;--1:#616972">// Creating a panic handler, since we are not using the std library</span></div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">#[panic_handler]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#F97583;--1:#BF3441">fn</span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#B392F0;--1:#6F42C1">panic</span><span style="--0:#E1E4E8;--1:#24292E">(_info</span><span style="--0:#F97583;--1:#BF3441">:</span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#F97583;--1:#BF3441">&#x26;</span><span style="--0:#B392F0;--1:#6F42C1">PanicInfo</span><span style="--0:#E1E4E8;--1:#24292E">) </span><span style="--0:#F97583;--1:#BF3441">-></span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#F97583;--1:#BF3441">!</span><span style="--0:#E1E4E8;--1:#24292E"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#F97583;--1:#BF3441">loop</span><span style="--0:#E1E4E8;--1:#24292E"> {}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">}</span></div></div></code></pre><div class="copy"><button title="Copy to clipboard" data-copied="Copied!" data-code="use core::panic::PanicInfo;// Creating a panic handler, since we are not using the std library#[panic_handler]fn panic(_info: &#x26;PanicInfo) -> ! {    loop {}}"><div></div></button></div></figure></div>
+<p>Since we don’t have an OS to return to, the panic handler is a diverging function (returns <code>!</code>), meaning it never returns.</p>
+<h2 id="stack-unwinding">Stack Unwinding</h2>
+<p>By default, when a Rust program panics, it initiates a process called <strong>stack unwinding</strong>. This process walks back up the stack, cleaning up data and running destructors for every object in scope. This ensures that resources (like open files or memory allocations) are properly released even during a crash.</p>
+<p>However, stack unwinding is complex and requires significant runtime support (often provided by <code>libunwind</code> or similar libraries). In this initial phase, let’s omit stack unwinding to keep the kernel footprint minimal. Feel free to implement this yourself, for the first iteration we will be focusing on the core functionality first.</p>
+<p>For our OS kernel, if a panic occurs, there is no “higher authority” to catch it or clean up after it—the system is effectively dead. Therefore, the simplest and most robust approach is to <strong>abort</strong> immediately.</p>
+<p>We can disable unwinding by setting <code>panic = "abort"</code> in our <code>Cargo.toml</code>. This tells the compiler to simply generate a “trap” instruction (like a breakpoint or infinite loop) on panic, drastically reducing the binary size and removing the need for unwinding infrastructure.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="toml"><code><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">[</span><span style="--0:#B392F0;--1:#6F42C1">profile</span><span style="--0:#E1E4E8;--1:#24292E">.</span><span style="--0:#B392F0;--1:#6F42C1">dev</span><span style="--0:#E1E4E8;--1:#24292E">]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">panic = </span><span style="--0:#9ECBFF;--1:#032F62">"abort"</span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#99A0A6;--1:#616972"># disable stack unwinding on panic</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">[</span><span style="--0:#B392F0;--1:#6F42C1">profile</span><span style="--0:#E1E4E8;--1:#24292E">.</span><span style="--0:#B392F0;--1:#6F42C1">release</span><span style="--0:#E1E4E8;--1:#24292E">]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">panic = </span><span style="--0:#9ECBFF;--1:#032F62">"abort"</span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#99A0A6;--1:#616972"># disable stack unwinding on panic</span></div></div></code></pre><div class="copy"><button title="Copy to clipboard" data-copied="Copied!" data-code="[profile.dev]panic = &#x22;abort&#x22; # disable stack unwinding on panic[profile.release]panic = &#x22;abort&#x22; # disable stack unwinding on panic"><div></div></button></div></figure></div>
+<h2 id="the-entry-point">The Entry Point</h2>
+<p>In a standard Rust application, <code>fn main()</code> isn’t actually the first thing the computer runs. There is a hidden “preparation” phase handled by a piece of software called <code>crt0</code> (C Runtime Zero).</p>
+<p>When you move to a freestanding environment (like writing an OS kernel or firmware for a bare-metal microcontroller), you are essentially telling the compiler: “I’m taking over. Don’t assume there is an operating system, a filesystem, or a pre-configured environment.”</p>
+<h3 id="1-the-standard-flow-hosted-environment">1. The Standard Flow (Hosted Environment)</h3>
+<p>In a typical Windows, macOS, or Linux environment, the execution flow looks like this:</p>
+<ol>
+<li><strong>The OS Loader</strong>: Loads your compiled binary into memory.</li>
+<li><strong><code>crt0</code> (The C Runtime)</strong>: This is the “pre-game” setup. It:
+<ul>
+<li>Initializes the stack.</li>
+<li>Places arguments (<code>argc</code>, <code>argv</code>) into the correct registers.
+<ul>
+<li><code>argc</code> (Argument Count): An integer representing the number of arguments passed (e.g., 3).</li>
+<li><code>argv</code> (Argument Vector): A pointer to an array of strings (the actual arguments, like [”./my_program”, “arg1”, “arg2”]).</li>
+</ul>
+</li>
+<li>Sets up the C Library (e.g., glibc).</li>
+</ul>
+</li>
+<li><strong>Rust Runtime Entry</strong>: The Rust standard library has its own entry point that handles panic hooks and stack overflow guards.</li>
+<li><strong><code>fn main()</code></strong>: Your code finally runs.</li>
+</ol>
+<h3 id="2-the-freestanding-flow-bare-metal">2. The Freestanding Flow (Bare Metal)</h3>
+<p>In a freestanding binary, you use <code>#![no_std]</code> and <code>#![no_main]</code>. Since there is no <code>crt0</code>, the hardware (CPU/BIOS/UEFI) jumps directly to a specific memory address where it expects your code to be.</p>
+<h4 id="key-missing-components">Key Missing Components</h4>
+<p>Because you lack the C runtime, you lose several “comforts” we usually take for granted:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">Feature</th><th align="left">Standard Rust</th><th align="left">Freestanding Rust</th></tr></thead><tbody><tr><td align="left"><strong>Memory</strong></td><td align="left"><code>Box</code>, <code>Vec</code>, <code>String</code> (Dynamic allocation)</td><td align="left">Only Stack (unless you write an Allocator)</td></tr><tr><td align="left"><strong>Output</strong></td><td align="left"><code>println!</code></td><td align="left">Must write to serial ports or VGA buffer</td></tr><tr><td align="left"><strong>Threads</strong></td><td align="left"><code>std::thread</code></td><td align="left">Must implement a scheduler manually</td></tr><tr><td align="left"><strong>Panic</strong></td><td align="left">Unwinds stack and prints error</td><td align="left">You must define a <code>#[panic_handler]</code></td></tr></tbody></table>
+<h3 id="3-why-we-use-_start">3. Why we use <code>_start</code></h3>
+<p>Since the linker (the tool that stitches your code together) can no longer find the standard entry point, we have to define our own. By convention, this is named <code>_start</code>.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="rust"><code><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">#![no_main]</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#99A0A6;--1:#616972">// ...</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">#[</span><span style="--0:#F97583;--1:#BF3441">unsafe</span><span style="--0:#E1E4E8;--1:#24292E">(no_mangle)]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#F97583;--1:#BF3441">pub</span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#F97583;--1:#BF3441">extern</span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#9ECBFF;--1:#032F62">"C"</span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#F97583;--1:#BF3441">fn</span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#B392F0;--1:#6F42C1">_start</span><span style="--0:#E1E4E8;--1:#24292E">() </span><span style="--0:#F97583;--1:#BF3441">-></span><span style="--0:#E1E4E8;--1:#24292E"> </span><span style="--0:#F97583;--1:#BF3441">!</span><span style="--0:#E1E4E8;--1:#24292E"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#99A0A6;--1:#616972">// The CPU starts here.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#99A0A6;--1:#616972">// We must initialize everything ourselves.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#F97583;--1:#BF3441">loop</span><span style="--0:#E1E4E8;--1:#24292E"> {}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">}</span></div></div></code></pre><div class="copy"><button title="Copy to clipboard" data-copied="Copied!" data-code="#![no_main]// ...#[unsafe(no_mangle)]pub extern &#x22;C&#x22; fn _start() -> ! {    // The CPU starts here.    // We must initialize everything ourselves.    loop {}}"><div></div></button></div></figure></div>
+<ul>
+<li><code>#[no_mangle]</code>: Tells the Rust compiler not to change the name of the function to something like <code>_ZN3app6_startE...</code>. The hardware/linker needs to see the exact name <code>_start</code>.</li>
+<li><code>extern "C"</code>: Tells the compiler to use the C calling convention. This ensures that the way parameters are passed (via registers vs. stack) matches what the hardware expects.</li>
+<li><code>-> !</code>: This is the “Never” type. Since there is no OS to return to, this function must never exit. If it did, the CPU would simply keep executing whatever random data happens to be next in memory.</li>
+</ul>
+<h3 id="what-happens-if-you-use-std">What happens if you use <code>std</code>?</h3>
+<p>If you try to compile a standard program for a freestanding target (like an ARM Cortex-M or x86_64 bare-metal), the compiler will throw errors because it cannot find the system libraries for things like file I/O or threading.</p>
+<h2 id="target-configuration">Target Configuration</h2>
+<p>When you build a binary, you are not just compiling “Rust code.”
+You are producing a machine-specific executable artifact that must match:</p>
+<ul>
+<li>A specific CPU architecture</li>
+<li>A specific operating system</li>
+<li>A specific ABI (Application Binary Interface)</li>
+<li>A specific C runtime / linking environment</li>
+</ul>
+<p>Normally, when you run cargo build, Rust looks at your computer (e.g., <code>Windows x86_64</code>) and builds for that. For an OS project, you are cross-compiling—writing code on your PC to run on a completely different CPU architecture.
+Since we are cross-compiling: writing code on your PC to run on a completely different architecture with zero OS support.
+To achieve this, we define a Freestanding Target in .cargo/config.toml:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">config.toml</span></figcaption><pre data-language="toml"><code><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">[</span><span style="--0:#B392F0;--1:#6F42C1">build</span><span style="--0:#E1E4E8;--1:#24292E">]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#E1E4E8;--1:#24292E">target = </span><span style="--0:#9ECBFF;--1:#032F62">"thumbv7em-none-eabihf"</span></div></div></code></pre><div class="copy"><button title="Copy to clipboard" data-copied="Copied!" data-code="[build]target = &#x22;thumbv7em-none-eabihf&#x22;"><div></div></button></div></figure></div>
+<p>We will discuss this in depth later.</p>
+<h3 id="detailed-firmware-execution">Detailed Firmware Execution</h3>
+<pre class="mermaid">%%{init: {'flowchart': {'htmlLabels': true}, 'theme': 'dark'}}%%
+flowchart TD
+    A["💾 Firmware Code&#x3C;br/>in Motherboard ROM"] --> B["🧪 Perform&#x3C;br/>Power-On Self-Test"]
+    B --> C{"✓ Test&#x3C;br/>Passed?"}
+    C -->|❌ No| D["⛔ Halt System"]
+    C -->|✓ Yes| E["🧠 Detect Available&#x3C;br/>RAM"]
+    E --> F["⚡ Pre-Initialize&#x3C;br/>CPU &#x26; Hardware"]
+    F --> G["💾 Look for&#x3C;br/>Bootable Disk"]
+    G --> H{"✓ Bootable&#x3C;br/>Found?"}
+    H -->|❌ No| I["⚠️ No Boot Device&#x3C;br/>Found"]
+    H -->|✓ Yes| J["🚀 Start Booting&#x3C;br/>OS Kernel"]
+    
+    style A fill:#1a472a,stroke:#0f2b1a,stroke-width:3px,color:#fff,font-weight:bold
+    style B fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
+    style C fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
+    style D fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
+    style E fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
+    style F fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
+    style G fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
+    style H fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
+    style I fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
+    style J fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold</pre>
+<p>When you turn on a computer, it begins executing firmware code that is stored in motherboard ROM. This code performs a power-on self-test, detects available RAM, and pre-initializes the CPU and hardware. Afterwards, it looks for a bootable disk and starts booting the operating system kernel.</p>
+<p>When we turn on a computer, the machine undergoes a critical initialization phase known as the <strong>Power-On Self-Test (POST)</strong>
+<strong>Power-On Self-Test (POST)</strong> checks the following:</p>
+<ul>
+<li>CPU basic functionality</li>
+<li>RAM presence</li>
+<li>GPU</li>
+<li>Keyboard controller</li>
+<li>Essential peripherals</li>
+</ul>
+<h2 id="the-boot-process">The Boot Process</h2>
+<p>When power is first applied, the firmware (BIOS or UEFI) wakes up and verifies that the hardware components—such as the CPU, RAM, and peripherals—are functioning correctly. If any critical component fails, the system halts. If the checks pass, the firmware then looks for a bootable device (like a hard drive or USB) to load the bootloader from.</p>
+<p>To visualize how we get to our <code>_start</code> function, here is a simplified view of the boot process:</p>
+<pre class="mermaid">%%{init: {'flowchart': {'htmlLabels': true}, 'theme': 'dark'}}%%
+flowchart TD
+    A["⚡ Power Button&#x3C;br/>Pressed"] --> B["🔌 Power Supplied&#x3C;br/>to Motherboard"]
+    B --> C["🖥️ Firmware Starts&#x3C;br/>BIOS or UEFI"]
+    C --> D["🧪 Power-On&#x3C;br/>Self-Test"]
+    D --> E{"✓ Hardware&#x3C;br/>Check OK?"}
+    E -->|❌ No| F["⛔ System Halt"]
+    E -->|✓ Yes| G["⚙️ Initialize&#x3C;br/>Hardware"]
+    G --> H["🔍 Search for&#x3C;br/>Bootable Device"]
+    H --> I["📦 Load&#x3C;br/>Bootloader"]
+    
+    style A fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
+    style B fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
+    style C fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
+    style D fill:#2d5aa6,stroke:#1e3f7a,stroke-width:3px,color:#fff,font-weight:bold
+    style E fill:#ff9f1c,stroke:#cc6d00,stroke-width:3px,color:#000,font-weight:bold
+    style F fill:#e63946,stroke:#b81d22,stroke-width:3px,color:#fff,font-weight:bold
+    style G fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
+    style H fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold
+    style I fill:#06a77d,stroke:#047857,stroke-width:3px,color:#fff,font-weight:bold</pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>With these pieces in place—<code>no_std</code>, a custom panic handler, strictly defined entry point, and the correct target—<code>boot-me-maybe-os</code> can now be built as a standalone binary ready for bare-metal execution. The next steps will involve interacting with hardware and getting something to appear on the screen!</p>  </div> <div class="blog-post-nav" data-astro-cid-4dqtj3le> <a href="/" class="back-link" data-astro-cid-4dqtj3le>cd ..</a> </div> </article>  </div> </main> <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <div id="search-modal" x-data="{ 
+    open: false,
+    query: '',
+    results: [],
+    selectedIndex: -1,
+    init() {
+      this.$watch('open', value => {
+        if (value) {
+          setTimeout(() => this.$refs.searchInput.focus(), 50);
+          document.body.classList.add('modal-open');
+        } else {
+          document.body.classList.remove('modal-open');
+        }
+      });
+      
+      document.addEventListener('toggle-search', () => {
+        this.open = !this.open;
+        this.query = '';
+        this.results = [];
+      });
+      
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && !this.open && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          this.open = true;
+        }
+        if (e.key === 'Escape' && this.open) {
+          this.open = false;
+        }
+      });
+    },
+    search() {
+      if (this.query.length < 2) {
+        this.results = [];
+        return;
+      }
+      
+      const fuseSearch = new window.Fuse(this.searchableContent, {
+        keys: ['title', 'description', 'content'],
+        includeScore: true,
+        threshold: 0.4,
+        ignoreLocation: true
+      });
+      
+      this.results = fuseSearch.search(this.query).slice(0, 10);
+      this.selectedIndex = this.results.length > 0 ? 0 : -1;
+    },
+    handleKeyDown(event) {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        this.selectedIndex = Math.min(this.selectedIndex + 1, this.results.length - 1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
+      } else if (event.key === 'Enter' && this.selectedIndex >= 0) {
+        event.preventDefault();
+        window.location.href = this.results[this.selectedIndex].item.url;
+      }
+    }
+  }" x-init="searchableContent = JSON.parse(decodeURIComponent('<%- encodeURIComponent(JSON.stringify(searchableContent)) %>'))" x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95" class="search-modal" @keydown.escape="open = false" data-astro-cid-qk3db3zz> <div class="search-backdrop" @click="open = false" data-astro-cid-qk3db3zz></div> <div class="search-container" data-astro-cid-qk3db3zz> <div class="search-header" data-astro-cid-qk3db3zz> <div class="terminal-dots" data-astro-cid-qk3db3zz> <div class="dot red" data-astro-cid-qk3db3zz></div> <div class="dot yellow" data-astro-cid-qk3db3zz></div> <div class="dot green" data-astro-cid-qk3db3zz></div> </div> <span class="search-title" data-astro-cid-qk3db3zz>$ grep -r</span> <button class="close-button" @click="open = false" data-astro-cid-qk3db3zz>×</button> </div> <div class="search-content" data-astro-cid-qk3db3zz> <div class="search-input-container" data-astro-cid-qk3db3zz> <input x-ref="searchInput" type="text" placeholder="Search the blog..." x-model="query" @input="search()" @keydown="handleKeyDown($event)" class="search-input" data-astro-cid-qk3db3zz> </div> <div class="search-results" x-show="query.length > 1" data-astro-cid-qk3db3zz> <template x-if="results.length === 0 && query.length > 1" data-astro-cid-qk3db3zz> <div class="no-results" data-astro-cid-qk3db3zz>No results found for "<span x-text="query" data-astro-cid-qk3db3zz></span>"</div> </template> <template x-if="results.length > 0" data-astro-cid-qk3db3zz> <ul class="results-list" data-astro-cid-qk3db3zz> <template x-for="(result, index) in results" :key="result.item.id" data-astro-cid-qk3db3zz> <li class="result-item" :class="{ 'selected': index === selectedIndex }" @click="window.location.href = result.item.url" @mouseover="selectedIndex = index" data-astro-cid-qk3db3zz> <div class="result-title" x-text="result.item.title" data-astro-cid-qk3db3zz></div> <div class="result-date" x-text="new Date(result.item.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })" data-astro-cid-qk3db3zz></div> <div class="result-description" x-text="result.item.description || result.item.content.slice(0, 100) + '...'" data-astro-cid-qk3db3zz></div> </li> </template> </ul> </template> </div> </div> <div class="search-footer" x-show="query.length > 1" data-astro-cid-qk3db3zz> <div class="keyboard-shortcuts" data-astro-cid-qk3db3zz> <span data-astro-cid-qk3db3zz>↑↓ to navigate</span> <span data-astro-cid-qk3db3zz>↵ to select</span> <span data-astro-cid-qk3db3zz>ESC to close</span> </div> </div> </div> </div>  <div id="newsletter-modal" x-data="{ 
+    open: false,
+    submitted: false,
+    init() {
+      // Listen for manual open event
+      document.addEventListener('open-newsletter', () => {
+        this.open = true;
+      });
+
+      // Check if already dismissed or subscribed
+      if (localStorage.getItem('newsletter_dismissed')) {
+        return;
+      }
+
+      // Auto-open only on blog posts
+      if (window.location.pathname.startsWith('/blog/')) {
+        // Show after 3 seconds
+        setTimeout(() => {
+           this.open = true;
+        }, 3000);
+      }
+    },
+    dismiss() {
+      this.open = false;
+      localStorage.setItem('newsletter_dismissed', 'true');
+    },
+    handleLoad() {
+      // This function runs when the iframe loads (after submission)
+      if (this.submitted) {
+        // Show success message or just close
+        // For now, let's just close it after a brief delay to imply success
+        setTimeout(() => {
+           this.dismiss();
+        }, 1000);
+      }
+    },
+    submitForm() {
+      this.submitted = true;
+      // The form submission is handled by the browser target='hidden_iframe'
+      // We just set the submitted flag to handle the iframe load event
+    }
+  }" x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-90" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-90" class="newsletter-modal" style="display: none;" :style="open ? 'display: flex' : 'display: none'" data-astro-cid-rcfmcarr> <div class="newsletter-backdrop" @click="dismiss()" data-astro-cid-rcfmcarr></div> <div class="newsletter-container" data-astro-cid-rcfmcarr> <div class="terminal-header" data-astro-cid-rcfmcarr> <div class="terminal-dots" data-astro-cid-rcfmcarr> <div class="dot red" @click="dismiss()" data-astro-cid-rcfmcarr></div> <div class="dot yellow" data-astro-cid-rcfmcarr></div> <div class="dot green" data-astro-cid-rcfmcarr></div> </div> <span class="terminal-title" data-astro-cid-rcfmcarr>subscribe.sh</span> </div> <div class="newsletter-content" x-show="!submitted" data-astro-cid-rcfmcarr> <h3 data-astro-cid-rcfmcarr>Stay Updated!</h3> <p data-astro-cid-rcfmcarr>Get the latest posts delivered straight to your inbox.</p> <!-- GOOGLE FORM INTEGRATION --> <!-- Replace ACTION_URL with your Google Form action URL --> <!-- Replace ENTRY_ID with your email input name attribute --> <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" @load="handleLoad()" data-astro-cid-rcfmcarr></iframe> <form action="https://docs.google.com/forms/d/e/1FAIpQLSfZIQJga0QNT31bctskhz0S3sHPeLnTjYBUAhnufC1yEdcl-g/formResponse" method="post" target="hidden_iframe" @submit="submitForm()" class="newsletter-form" data-astro-cid-rcfmcarr> <div class="input-group" data-astro-cid-rcfmcarr> <span class="prompt" data-astro-cid-rcfmcarr>$</span> <input type="email" name="entry.1831353926" placeholder="enter your email..." required class="email-input" data-astro-cid-rcfmcarr> </div> <div class="form-actions" data-astro-cid-rcfmcarr> <button type="button" @click="dismiss()" class="btn-cancel" data-astro-cid-rcfmcarr>Cancel</button> <button type="submit" class="btn-submit" data-astro-cid-rcfmcarr>Subscribe</button> </div> </form> </div> <div class="newsletter-success" x-show="submitted" data-astro-cid-rcfmcarr> <div class="success-icon" data-astro-cid-rcfmcarr>✓</div> <h3 data-astro-cid-rcfmcarr>Subscribed!</h3> <p data-astro-cid-rcfmcarr>Thanks for joining. See you in the inbox.</p> </div> </div> </div>  <!-- Fuse.js for search --> <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script> </body> </html>  

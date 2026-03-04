@@ -146,7 +146,7 @@ flowchart TD
     D --> E
     E -->|❌ No| F
     E -->|✓ Yes| G
-    G --> H["🚀 Load & Start OS Kernel"]
+    G --> H["🚀 Bootloader: Load & Start OS Kernel"]
 
     style FW fill:none,stroke:#ffffff,stroke-width:3px,stroke-dasharray: 8 6
     style A fill:#444,stroke:#222,stroke-width:3px,color:#fff,font-weight:bold
@@ -176,6 +176,80 @@ When you turn on a computer, the following steps happen in the following order:
 There are two firmware standards: 
 1. **“Basic Input/Output System“ (BIOS)** The BIOS standard is old and outdated, but simple and well-supported on any x86 machine since the 1980s.
 2. **“Unified Extensible Firmware Interface” (UEFI)** UEFI, in contrast, is more modern and has much more features, but is more complex to set up.
+
+## Bootloader:
+When BIOS finds a bootable device, it:
+- Reads the first 512 bytes from the disk. Those 512 bytes are called **Master Boot Record (MBR)**
+
+    **Why Only 512 Bytes?**
+
+    Because the BIOS boot protocol is ancient.
+- Loads it to memory at address `0x7C00`
+- Jumps to it
+
+Because the BIOS boot protocol is very old, it only loads these 512 bytes initially. Since this space is too small for a full bootloader, most bootloaders use multiple stages: a tiny first stage in the MBR that loads a larger second stage.
+
+The bootloader’s responsibilities are:
+- Locate the OS kernel image on disk and load it into memory.
+- Switch the CPU from 16-bit real mode → 32-bit protected mode → 64-bit long mode, enabling full memory access and 64-bit registers.
+
+    **Real Mode: (16-bit):**
+    This is the legacy state the CPU enters immediately after power-on. It mimics the original Intel 8086 processor.
+
+    - **Registers:** Limited to 16 bit registers.
+    - **Memory Access:** You can only access about 1 MB of RAM.
+    - **Security:** There is no memory protection. Any code can write to any part of memory, including the BIOS or other programs.
+
+    > [!NOTE] 
+    > **1MB of RAM How?**
+    > 
+    > The original 8086 CPU had:
+    >  - 16-bit registers
+    >  - But a 20-bit address bus
+    >       - An address bus is the set of physical wires the CPU uses to denote a memory address to RAM.
+    >
+    > Why?
+    > Because Intel wanted:
+    > - Cheap 16-bit internal design
+    > - But ability to address more than 64KB
+    >
+    >  A 16-bit register alone can only address:
+    > - `2^16 = 65,536 bytes = 64KB`
+    > - But Intel wanted:
+    > - `2^20 = 1,048,576 bytes = 1MB`
+    >
+    > The Trick: Segmentation
+    > Instead of increasing register size, they introduced:
+    > - 16-bit segment register
+    > - 4-bit offset register
+    > 
+    > And combined 2 registers (16-bit + 4-bit) to produce a 20-bit physical address.
+
+    **Protected Mode: (32-bit):**
+    In this mode, programs are isolated. The CPU enforces boundaries.
+    - **Registers:** Limited to 32 bit registers.
+    - **Memory Access:** You can only access about 4 GB of RAM.
+    - **Security:** Introduces different hardware-enforced access levels.
+    **Ring 0:** Kernel run here, has full control
+    **Ring 3:** User applications run here, restricted access, can't access kernel memory, can't run privileged instructions.
+
+    If somebody tries to write in kernel:
+    - CPU immediately stops execution
+    - Raises a **General Protection Fault (GPF)**
+    - OS kills the process
+
+    **Long Mode (64-bit):**  
+    This is the modern 64-bit operating mode used by today’s operating systems.  
+    It provides a massive virtual address space, mandatory paging, and stronger memory control.
+
+    - **Registers:** Expanded to 64-bit registers (`RAX`, `RBX`, etc.), plus additional registers (`R8–R15`).  
+    This allows direct 64-bit arithmetic and much larger integer values.
+
+    - **Memory Access:** Theoretical limit is extremely large (2⁶⁴ bytes).  
+    Practically, current CPUs use 48-bit virtual addressing (≈256 TB of virtual memory).  
+    Paging is mandatory — all memory access goes through page tables.
+
+    - **Security:** Same differen hardware-enforced access levels as protected mode.
 
 
 ## Conclusion

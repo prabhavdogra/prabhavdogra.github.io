@@ -158,7 +158,8 @@ flowchart TD
 <li><strong>“Unified Extensible Firmware Interface” (UEFI)</strong> UEFI, in contrast, is more modern and has much more features, but is more complex to set up.</li>
 </ol>
 <h2 id="bootloader">Bootloader:</h2>
-<p>When BIOS finds a bootable device, it:</p>
+<p>Bootloader is a critical, low-level program that runs immediately upon device power-on to initialize hardware and loads the operating system (OS) or firmware into memory.
+When BIOS finds a bootable device, it:</p>
 <ul>
 <li>
 <p>Reads the first 512 bytes from the disk. Those 512 bytes are called <strong>Master Boot Record (MBR)</strong></p>
@@ -253,6 +254,19 @@ Paging is mandatory — all memory access goes through page tables.</p>
 </ul>
 </li>
 </ul>
+<h2 id="our-bootloader">Our Bootloader</h2>
+<p>Multiboot is a standard protocol that acts as a universal “handshake” between a bootloader (like GRUB) and your operating system kernel.</p>
+<p>To avoid every operating system implementing its own custom bootloader, the Free Software Foundation introduced the Multiboot standard in 1995. It defines a common interface between the bootloader and the kernel, allowing any Multiboot-compliant bootloader to load any compliant OS. The reference implementation is GNU GRUB, the widely used Linux bootloader.</p>
+<p>Making a kernel Multiboot-compliant is relatively simple — you only need to add a special Multiboot header at the beginning of the kernel binary. This allows GRUB to recognize and load it.
+<img  src="/_astro/bootloader.rTw2yTtP_2txU8R.webp" alt="alt text" width="1408" height="768" loading="lazy" decoding="async"></p>
+<p>However, Multiboot and GRUB have some practical drawbacks:</p>
+<ul>
+<li>They support only the 32-bit protected mode. This means that you still have to do the CPU configuration to switch to the 64-bit long mode.</li>
+<li>They are designed to make the bootloader simple instead of the kernel. For example, the kernel needs to be linked with an adjusted default page size, because GRUB can’t find the Multiboot header otherwise. Another example is that the boot information, which is passed to the kernel, contains lots of architecture-dependent structures instead of providing clean abstractions.</li>
+<li>Both GRUB and the Multiboot standard are only sparsely documented.</li>
+<li>GRUB needs to be installed on the host system to create a bootable disk image from the kernel file. This makes development on Windows or Mac more difficult.</li>
+</ul>
+<p>Because of these limitations, we are choosing not to rely on GRUB or the Multiboot standard for this project. Instead, we’ll be using a custom boot approach tailored for a 64-bit Rust kernel, keeping the early boot process minimal and under full control.</p>
 <h2 id="conclusion">Conclusion</h2>
 <p>With these pieces in place—<code>no_std</code>, a custom panic handler, strictly defined entry point, and the correct target—<code>boot-me-maybe-os</code> can now be built as a standalone binary ready for bare-metal execution. The next steps will involve interacting with hardware and getting something to appear on the screen!</p>  </div> <div class="blog-post-nav" data-astro-cid-4dqtj3le> <a href="/" class="back-link" data-astro-cid-4dqtj3le>cd ..</a> </div> </article>  </div> </main> <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <button id="theme-toggle" aria-label="Toggle dark mode" data-astro-cid-x3pjskd3> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-astro-cid-x3pjskd3> <path class="sun" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-15v2m0 16v2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4M2 12h2m16 0h2M5.3 18.7l1.4-1.4m10.6-10.6 1.4-1.4" data-astro-cid-x3pjskd3></path> <path class="moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 10 10z" data-astro-cid-x3pjskd3></path> </svg> </button>   <div id="search-modal" x-data="{ 
     open: false,

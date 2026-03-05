@@ -178,6 +178,7 @@ There are two firmware standards:
 2. **“Unified Extensible Firmware Interface” (UEFI)** UEFI, in contrast, is more modern and has much more features, but is more complex to set up.
 
 ## Bootloader:
+Bootloader is a critical, low-level program that runs immediately upon device power-on to initialize hardware and loads the operating system (OS) or firmware into memory.
 When BIOS finds a bootable device, it:
 - Reads the first 512 bytes from the disk. Those 512 bytes are called **Master Boot Record (MBR)**
 
@@ -251,6 +252,22 @@ The bootloader’s responsibilities are:
 
     - **Security:** Same differen hardware-enforced access levels as protected mode.
 
+## Our Bootloader
+Multiboot is a standard protocol that acts as a universal "handshake" between a bootloader (like GRUB) and your operating system kernel.
+
+To avoid every operating system implementing its own custom bootloader, the Free Software Foundation introduced the Multiboot standard in 1995. It defines a common interface between the bootloader and the kernel, allowing any Multiboot-compliant bootloader to load any compliant OS. The reference implementation is GNU GRUB, the widely used Linux bootloader.
+
+Making a kernel Multiboot-compliant is relatively simple — you only need to add a special Multiboot header at the beginning of the kernel binary. This allows GRUB to recognize and load it.
+![alt text](bootloader.png)
+
+However, Multiboot and GRUB have some practical drawbacks:
+
+- They support only the 32-bit protected mode. This means that you still have to do the CPU configuration to switch to the 64-bit long mode.
+- They are designed to make the bootloader simple instead of the kernel. For example, the kernel needs to be linked with an adjusted default page size, because GRUB can’t find the Multiboot header otherwise. Another example is that the boot information, which is passed to the kernel, contains lots of architecture-dependent structures instead of providing clean abstractions.
+- Both GRUB and the Multiboot standard are only sparsely documented.
+- GRUB needs to be installed on the host system to create a bootable disk image from the kernel file. This makes development on Windows or Mac more difficult.
+
+Because of these limitations, we are choosing not to rely on GRUB or the Multiboot standard for this project. Instead, we'll be using a custom boot approach tailored for a 64-bit Rust kernel, keeping the early boot process minimal and under full control.
 
 ## Conclusion
 

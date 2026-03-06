@@ -269,6 +269,141 @@ However, Multiboot and GRUB have some practical drawbacks:
 
 Because of these limitations, we are choosing not to rely on GRUB or the Multiboot standard for this project. Instead, we'll be using a custom boot approach tailored for a 64-bit Rust kernel, keeping the early boot process minimal and under full control.
 
+## A minimum Kernel
+Now that we roughly know how a computer boots, it’s time to create our own minimal kernel. Our goal is to create a disk image that prints a “Hello World!” to the screen when booted. We do this by extending the previous post’s freestanding Rust binary.
+
+## Target Specification
+Continuing from the concept of target triples, for our use case we were using `target = "thumbv7em-none-eabihf"` to define our target.
+Since we are doing OS development where we our target machine is bare metal hardware. We have to define our own Custom Target Specification as per our own needs.
+
+### The Anatomy of a Target JSON
+
+A target specification file tells the Rust compiler exactly how to handle code generation and linking without relying on a host operating system. For an x86_64 system, the configuration might look like this:
+```json
+{
+    "llvm-target": "x86_64-unknown-none",
+    "data-layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "arch": "x86_64",
+    "target-endian": "little",
+    "target-pointer-width": "64",
+    "target-c-int-width": "32",
+    "os": "none",
+    "executables": true,
+    "linker-flavor": "ld.lld",
+    "linker": "rust-lld",
+    "panic-strategy": "abort",
+    "disable-redzone": true,
+    "features": "-mmx,-sse,+soft-float",
+    "rustc-abi": "x86-softfloat"
+}
+```
+
+### Key Configuration Fields
+
+When you move away from a standard target like `x86_64-unknown-linux-gnu`, these specific fields become critical:
+
+- **os: "none":** This is the "freestanding" flag. It tells Rust not to assume the existence of a kernel, a file system, or network stacks.
+- **linker-flavor: "ld.lld":** Instead of using the system's default C linker (which might try to include default Linux/Windows libraries), we use the LLVM linker provided with Rust.
+- **panic-strategy: "abort":** Since we don't have an OS to handle stack unwinding (the process of cleaning up memory after a crash), we simply tell the CPU to stop or "abort."
+- **disable-redzone:** A specific requirement for kernel-level programming. In x86_64, the "redzone" is an optimization that allows functions to use a small area below their stack pointer. If an interrupt occurs, this area could be overwritten, causing a catastrophic kernel crash.
+- **features:** Here we enable or disable CPU features. For example, +soft-float tells Rust to emulate floating-point math in software because our kernel hasn't initialized the hardware's FPU (Floating Point Unit) yet.
+
+## Printing to Screen
+In x86 systems, the VGA Text Buffer is memory-mapped to the address `0xb8000`. Anything you write to that memory location is immediately rendered by the graphics hardware onto the monitor.
+
+To understand the VGA text buffer, think of it as a long, continuous strip of memory starting at address 0xb8000. Even though we see a grid of "cells" (80x25) on the monitor, each "cell" is 2 bytes longs.
+Total memory of the buffer is = 80 * 25 * 2 bytes = 4000 bytes.
+
+Each "cell" on the screen takes up 2 bytes (16 bits) in memory:
+- **The Character Byte:** The ASCII value (e.g., 'H' is 0x48).
+- **The Attribute Byte:** This defines the color. The first 4 bits are the background, and the last 4 bits are the foreground (text color).
+
+### To print "OK" to the screen
+To see this in action, we can update your `_start` function. We use `unsafe` because we are dereferencing a raw pointer to a specific hardware memory address—something Rust normally prevents to keep you safe.
+```rust
+#[unsafe(no_mangle)]
+pub extern "C" fn _start() -> ! {
+    // A pointer to the VGA buffer (0xb8000)
+    // We are keeping this as u8 because ideally it'll be in the range [0xb8000, 0xb8000 + 4000]
+    let vga_buffer = 0xb8000 as *mut u8;
+
+    // We use 'unsafe' because we're writing directly to a memory address
+    unsafe {
+        // Write 'O' (ASCII 0x4F) at the first position
+        *vga_buffer.offset(0) = b'O';
+        // Set color: White text (0xF) on Black background (0x0) -> 0x0F
+        *vga_buffer.offset(1) = 0x0f;
+
+        // Write 'K' (ASCII 0x4B) at the second position (offset 2)
+        *vga_buffer.offset(2) = b'K';
+        // Set color: White text on Black background
+        *vga_buffer.offset(3) = 0x0f;
+    }
+
+    loop {}
+}
+```
+
+## Running the Kernel
+To turn our compiled kernel into a bootable disk image, we need to link it with a bootloader. The bootloader is responsible for initializing the CPU and loading our kernel.
+Instead of writing our own bootloader, which is a project on its own, we use the bootloader crate. This crate implements a basic BIOS bootloader without any C dependencies, just Rust and inline assembly. To use it for booting our kernel, we need to add a dependency on it:
+
+```toml title="Cargo.toml"
+
+[dependencies]
+bootloader = "0.9"
+```
+
+### How does it work?
+
+The bootimage tool performs the following steps behind the scenes:
+
+- **Compiling the Kernel to an ELF File:** The kernel is the core of your operating system. Because it doesn't run inside another OS (like Windows or Linux), it can't be a standard `.exe` or typical binary.
+    - **The Process:** The compiler takes your source code and translates it into machine code.
+    - **The Format:** It saves this code as an ELF (Executable and Linkable Format) file.
+    - **Why ELF?** ELF files contain more than just code; they include "headers" that tell the bootloader where the code should be loaded into memory and where the entry point (the first instruction) is located.
+- **Compiling the Bootloader:** The bootloader is a small program that runs before the kernel. It's a separate program written to run in Real Mode (the 16-bit limited state the CPU starts in).
+It's responsible for initializing the CPU and loading the kernel into memory.
+- **Linking the Kernel and Bootloader:** This is where the magic happens. The bootimage tool takes the raw bytes of your Kernel ELF and "embeds" them into the bootloader binary.
+![OS boots up!](os_bootup.png)
+
+For this we are using an external tool called [`bootimage`](https://github.com/rust-osdev/bootimage).
+
+Install `bootimage` using cargo:
+````bash
+cargo install bootimage
+````
+
+Create a `bootimage` using:
+```bash
+cargo bootimage
+```
+
+### QEMU
+
+To run this kernel, we need to use QEMU, it's an open-source machine emulator and virtualizer. It lets you run an entire computer system inside another computer.
+- **Emulation:** QEMU can simulate a different CPU architecture.
+- **Virtualization:** QEMU can run a virtual machine.
+
+    QEMU simulates full hardware:
+    - CPU
+    - RAM
+    - disk
+    - BIOS / firmware
+    - VGA display
+
+To run the kernel in QEMU, we need to add the following to `.cargo/config.toml`:
+
+``` toml title=".cargo/config.toml"
+[target.'cfg(target_os = "none")']
+runner = "bootimage runner"
+```
+
+And finally, we can run the kernel in QEMU using:
+```bash
+cargo run
+```
+
 ## Conclusion
 
 With these pieces in place—`no_std`, a custom panic handler, strictly defined entry point, and the correct target—`boot-me-maybe-os` can now be built as a standalone binary ready for bare-metal execution. The next steps will involve interacting with hardware and getting something to appear on the screen!

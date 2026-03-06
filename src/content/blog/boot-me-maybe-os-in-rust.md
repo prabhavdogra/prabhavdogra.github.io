@@ -365,7 +365,6 @@ The bootimage tool performs the following steps behind the scenes:
 - **Compiling the Bootloader:** The bootloader is a small program that runs before the kernel. It's a separate program written to run in Real Mode (the 16-bit limited state the CPU starts in).
 It's responsible for initializing the CPU and loading the kernel into memory.
 - **Linking the Kernel and Bootloader:** This is where the magic happens. The bootimage tool takes the raw bytes of your Kernel ELF and "embeds" them into the bootloader binary.
-![OS boots up!](os_bootup.png)
 
 For this we are using an external tool called [`bootimage`](https://github.com/rust-osdev/bootimage).
 
@@ -403,6 +402,8 @@ And finally, we can run the kernel in QEMU using:
 ```bash
 cargo run
 ```
+
+![OS boots up!](os_bootup.png)
 
 ## Conclusion
 
